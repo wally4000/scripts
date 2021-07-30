@@ -16,7 +16,7 @@ This is a bunch of scripts for different things
 	mupen-compile.sh
 		Automates the whole mupen compilation with Pyra GLES functionality. 
 			Todo: Refine to what works.
-			
+				Automate building of the dbp using the utilities.
 			
 	--Game-Automation--
 		A folder just of scripts to automate pulling down games
