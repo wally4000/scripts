@@ -1,10 +1,45 @@
 #!/bin/bash
+# dbp-pack
+# By Wally - 2021
+#This tool creates DBP images for the Dragonbox-Pyra and is designed to work cross-platform.
 
 #Todo:
 # Refine the whole thing
 # Add zip -A feature
 # Add teasers
 # Add requirements for use of utility squashfs / zip
+# add --batch 
+
+#Logic
+#Set $1 to the target
+#Display message with application to pack as target name
+#Consistency
+# Do checks to confirm is sane
+    # Check dbpdata directory
+        #Throw error if directory doesn't exist
+    #check icons directory 
+        #Warn that no icon directory has been found
+    #check teasers directory
+        #Warn that no teasers directory has been found
+            #Advise that a teaser is added if adding to repo
+    #check metadata exists then confirm valid with dbp-validate-extracted
+        #If fails this inspection, error out and display message
+    #Check if $DBPDEST exists then add if not, make variable so user can select location
+
+#Method
+#Clean up macOS (.DS_Store), Linux (Lost and found folders), Windows (thumbs.db) stuff.
+    #Display message
+#Set permissions on DBP based on current advice
+#Squashfs the dbpdata folder
+#Zip metadata, icons, teasers in that order
+#concatnate dbp.sqfs data.zip 
+#zip -A to final output
+
+#Cleanup leftover files
+
+
+
+
 
 DBPNAME=$(basename "$DBP" "$2") ## Set the DBP Name to directory name
 
