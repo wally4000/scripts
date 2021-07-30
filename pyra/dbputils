@@ -1,0 +1,198 @@
+#!/bin/bash
+
+#prerequisites
+type mksquashfs >/dev/null 2>&1 || { echo >&2 "I require SquashFS but it's not installed.  Aborting."; exit 1; }
+type zip >/dev/null 2>&1 || { echo >&2 "I require zip but it's not installed.  Aborting."; exit 1; }
+
+#Global Variables
+DBPDIR="/media/ben/1/dragonbox/packages"
+
+
+#TODO
+# Add default icon
+# Write function to prompt replacement of existing DBP instead of exiting
+# Add error checking to unpack
+# implement desktop meta checker
+#Merge DBP and PND batch unpack / Unpack
+
+#this function packs the DBP as a nice package
+function pack()
+{
+DBPNAME=$(basename "$DBP" "$2") ## Set the DBP Name to directory name
+
+cd "$DBP"
+
+#Gather information from current working directory with information about DBP to be packed.
+dbptopack=$(pwd)
+echo "--- $dbptopack is being packed ---"
+
+#Consistency checks
+[ ! -d "$PWD/dbpdata" ] && echo "Please create dbpdata folder for $DBP" && exit 0
+[ ! -d "$PWD/icons" ] && echo "Please create icons folder" && exit 0
+[ ! -d "$PWD/meta" ] && echo "Please create meta folder" && exit 0
+[ ! -f "$PWD/meta/default.desktop" ] && echo "Please create default.desktop" && exit 0
+[   -f "$HOME/DBPS/$DBPNAME.dbp" ] && echo "$DBP.dbp already exists" && exit 0
+[ ! -d "$HOME/DBPS" ] && mkdir "$HOME/DBPS"
+
+#check for OSX, we don't want .DS_Store files littered everywhere.
+if [ "$(uname)" == "Darwin" ]; then
+echo "OSX detected"
+find . -name .DS_Store -type f -delete ; find . -type d | xargs dot_clean -m
+fi
+
+# Set Permissions and create squashfs file as advised by notaz
+echo "Setting permissions on "$PWD""
+chmod -R go+rwx "$PWD/"
+mksquashfs dbpdata dbpdata.sqfs -all-root -force-gid 0 -comp xz
+
+#Zip Data files and do consistency check to ensure zip file generated
+zip -r data.zip meta icons
+[ ! -f "$PWD/data.zip" ] && echo "data.zip failed to generate for some reason" && exit 0
+
+#append datafiles to dbpdata and output to dbpname.dbp
+cat dbpdata.sqfs data.zip > "$(basename "$dbptopack").dbp"
+
+#Clean up temporary files
+rm -r data.zip dbpdata.sqfs
+
+mv "$PWD/$DBPNAME.dbp" "$DBPDIR"
+echo "DBP $DBP has been generated successfully"
+cd ..
+
+}
+
+#This is the function to unpack pyra DBPs, it lists the DBP files then as per the list extracts each DBP until completed via the unpack function
+function batch-unpack()
+{
+
+
+for file in *
+do
+ls -l "$file" > /dev/null 2>&1
+done
+
+for i in ./*.dbp
+do
+if [ "-e $i" ]
+then
+for file in *.dbp
+do
+DBP=$(basename "$file" ".dbp")
+unpack
+done
+
+else
+echo "No DBP found for batch unpacking"
+exit 0
+fi
+exit 0
+done
+
+}
+
+#Unpacks individual DBP files by creating a directory based on the DBP name, appending the .dbp extension, unsquashing the DBP package and unzipping the meta / icons
+function unpack()
+{
+mkdir "$DBP"
+unsquashfs -d "$DBP/dbpdata" "$DBP.dbp"
+unzip "$DBP.dbp" -d "$DBP"
+echo "Extracted $DBP"
+}
+
+
+## Batch Pack a heap of DBPS, this is tested however is not working correctly.
+function batch-pack()
+{
+# Flag for batch
+
+#Check for file in current directory, enter loop, run pack command until completed
+for DBP in * ;
+do
+pack "$DBP"
+done
+echo "Batch Packing complete"
+}
+
+
+# Support basic OpenPandora PND Unpacking via squashfs.
+#ISO unpacking would make this too complex.
+function pnd-unpack()
+{
+#Consistency Checks
+[ ! -f "$DBP".pnd ] && echo "Usage: pnd-unpack pndname.pnd" && exit 0
+[ -d "$DBP" ] && echo "PND already extracted" && exit 0
+
+mkdir "$DBP" && mkdir "$DBP/PXML"
+unsquashfs -d "$DBP/pnddata" "$DBP.pnd"
+strings "$DBP.pnd" | tr "\n" "\1" | grep -Eio '<\?xml.*</PXML>' | tr "\1" "\n" > "$DBP/PXML/PXML.xml"
+printf "%s\n" "$DBP Extracted"
+}
+
+function generate-template()
+{
+# Generate folder and
+
+
+[  -d "$PWD/$DBP" ] && echo "$DBP Folder already exists" && exit 0
+mkdir  "$DBP" "$DBP/dbpdata" "$DBP/icons" "$DBP/meta"
+
+cat >"$DBP/meta/default.desktop"<<EOF
+[Desktop Entry]
+Version=0.1
+Type=Application
+Categories=Application;CHANGEME;
+Name=$DBP
+Exec=$DBP.launch
+Icon=icon.png
+
+[Package Entry]
+Id=$DBP$RANDOM
+Name=$DBP
+Arch=armhf
+Exec=$DBP.launch
+Version=0.1
+Appdata=$DBP
+Icon=icon.png
+EOF
+
+echo "$DBP" template created successfully
+}
+
+case "$1" in
+--batch-unpack)
+batch-unpack
+;;
+--unpack)
+DBP=$(basename "$2" .dbp)
+[ ! -f "$DBP.dbp" ] && echo "Usage: dbp-unpack dbpname.dbp" && exit 0
+unpack
+;;
+--pack)
+DBP=$(cd "$2"; /bin/pwd)
+DBPNAME=$(basename "$2")
+pack
+;;
+--batch-pack)
+batch-pack
+;;
+--pnd-unpack)
+DBP=$(basename "$2" .pnd)
+pnd-unpack
+;;
+--generate-template)
+DBP=$(basename "$2" .)
+generate-template
+;;
+--help)
+echo "DBPS will be located in $HOME/DBPS"
+echo "--dbp-pack /PATH/TO/FOLDER or --dbp-pack Directory"
+echo "--batch-pack, Batch pack must be done in directory with all DBPs to pack as a batch"
+echo "--dbp-unpack "
+;;
+*)
+echo "Please enter an option: --batch-unpack, --unpack dbp.dbp, --pack, --batch-pack, --pnd-unpack, --generate-template, --help"
+
+exit 0
+
+esac
+

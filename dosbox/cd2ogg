@@ -1,0 +1,3 @@
+cdparanoia -B "2-"
+oggenc *.wav
+rm *.wav
