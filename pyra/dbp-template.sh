@@ -1,36 +1,35 @@
 #!/bin/bash
-
-##Todo add missing preview image stuff
-# Add option to set category and cross-reference
-
-# Rid of the $random thing in Id as it's hard to
-# determine what the DBP is called, perhaps it should just be called the application name
-
-##Check to see if DBP folder exists
-    #Throw confirm overwrite metadata
-        #if yes, overwrite default.desktop only
-#Make directories dbp_name dbp_name/dbpdata /icons /meta/ teasers
-# Generate the default.desktop template
+# Add option to set category and cross-reference with the existing categories 
+## Add ability to add additional desktop files for extra executables
 
 
-[  -d "$PWD/$DBP" ] && echo "$DBP Folder already exists" && exit 0
-mkdir  "$DBP" "$DBP/dbpdata" "$DBP/icons" "$DBP/meta" "$DBP/teasers"
+TARGET=$1
 
-cat >"$DBP/meta/default.desktop"<<EOF
+[  -d "$PWD/$TARGET" ] && echo "$TARGET already exists" && exit 0
+mkdir  "$TARGET" "$TARGET/data" "$TARGET/icons" "$TARGET/metadata" "$TARGET/teasers"
+
+VERSION="0.1" ## Overrideable
+
+cat >"$TARGET/metadata/default.desktop"<<EOF
 [Desktop Entry]
 Version=0.1
 Type=Application
-Categories=Application;CHANGEME;
-Name=$DBP
-Exec=$DBP.launch
+Categories=Application;Game;
+Name=$TARGET
+Exec=$TARGET.launch
 Icon=icon.png
+X-DBP-Screenshot=preview.png 
 
 [Package Entry]
-Id=$DBP$RANDOM
-Name=$DBP
+Id=$TARGET
+Name=$TARGET
 Arch=armhf
-Exec=$DBP.launch
-Version=0.1
-Appdata=$DBP
+Exec=$TARGET.launch
+Version=$VERSION
+Appdata=$TARGET
 Icon=icon.png
+Dependency[deb]=
+Dependency[dbp]=
 EOF
+
+echo $TARGET DBP template generated

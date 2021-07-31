@@ -2,14 +2,9 @@
 
 #TODO:
 # Add Option for extraction point?
+TARGET=$1
 
-# Logic
-#Make Directory based on Filename
-#unsquashfs the fle
-#unzip the meta
-#Complete
-
-mkdir "$DBP"
-unsquashfs -d "$DBP/dbpdata" "$DBP.dbp"
-unzip "$DBP.dbp" -d "$DBP"
-echo "Extracted $DBP"
+mkdir "$TARGET"
+unsquashfs -d "$TARGET/dbp" "$TARGET.dbp"
+unzip "$TARGET.dbp" -d "$TARGET"
+echo "Extracted $TARGET"
