@@ -1,0 +1,34 @@
+#!/bin/bash
+## This is a helper to extract a DBP
+
+build() {
+FILE=$1
+TARGET=$(echo "$FILE" | cut -f 1 -d '.') 
+
+
+    if [ ! -f "$TARGET.dbp" ]; then
+        echo "Not a DBP";
+    else
+    mkdir "$TARGET"
+    unsquashfs -d "$TARGET/data" "$TARGET.dbp"
+    unzip "$TARGET.dbp" -d "$TARGET"
+    echo "Extracted $TARGET"
+    fi
+}
+
+batch(){
+    for TARGET in *.dbp ;
+        do
+            build "$TARGET"
+        done
+}
+
+
+if [ ! -f "$FILE" ] && [ "$1" != "batch" ]; then
+    echo "No target has been defined"
+elif [ "$1" == "batch" ]; then
+    echo "Batch compile in progress"
+    batch 
+else
+    build "$@"
+fi

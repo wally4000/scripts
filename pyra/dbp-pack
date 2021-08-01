@@ -11,26 +11,30 @@ if [ ! command -v zip &> /dev/null ]; then
     echo "Please install zip for your distribution"; exit 1;
 fi
 
-#Todo:
-# add --batch 
 
 # Probably better in your /dragonbox/packages folder on one of your SD cards
 # This is set to $HOME so it will work on all devices for performance in compression.
 
 DBPHOME=$HOME/DBPS
 
-TARGET=$1
-cd "$TARGET"
+build(){
 
-echo " --- $TARGET is being packed --- "
 
 #Consistency checks
-[ ! -d "$PWD/data" ] && echo "Please create data folder for $TARGET" && exit 0
-[ ! -d "$PWD/icons" ] && echo "Please create icons folder" && exit 0
-[ ! -d "$PWD/meta" ] && echo "Please create meta folder" && exit 0
-[ ! -f "$PWD/meta/default.desktop" ] && echo "Please create default.desktop" && exit 0
-[   -f "$DBPHOME/$DBPNAME.dbp" ] && echo "$DBP.dbp already exists" && exit 0
-[ ! -d "$DBPHOME" ] && mkdir "$HOME/DBPS"
+if [ -f $TARGET ]; then
+    echo "Not a directory"
+elif [ ! -d "$TARGET/data" ] || [ ! -d "$TARGET/icons" ] || [ ! -d "$TARGET/meta" ]; then
+    echo "$TARGET is Missing data / icons or meta folder"
+elif [ ! -f "$TARGET/meta/default.desktop" ]; then
+    echo "$TARGET is missing Default.desktop file"
+elif [ -f "$DBPHOME/$DBPNAME.dbp" ]; then
+    echo "DBP already exists"
+elif [ ! -d $DBPHOME ]; then
+    mkdir $DBPHOME
+else
+
+echo " --- $TARGET is being packed --- "
+cd "$TARGET"
 
 #Remove .DS_Store files where Darwin is involved
 if [ "$(uname)" == "Darwin" ]; then
@@ -41,16 +45,35 @@ fi
 # Set Permissions and create squashed / zipped volume
 chmod -R go+rwx "$PWD/"
 mksquashfs data target.sqfs -all-root -force-gid 0 -comp xz
-zip -Z store -r metadata.zip meta icons teasers
+zip -Z store -r meta.zip meta icons teasers
 
 #append datafiles to dbpdata and output to dbpname.dbp
-cat target.sqfs metadata.zip > "$TARGET.dbp"
+cat target.sqfs meta.zip > "$TARGET.dbp"
 zip -A "$TARGET.dbp"
 
 #Clean up temporary files
-rm -r metadata.zip target.sqfs
+rm -r meta.zip target.sqfs
 
-#Move DBP to allocated $DBPDIR
-mv "$PWD/$TARGET.dbp" "$DBPDIR"
+mv $TARGET.dbp "$DBPHOME"
 echo "$TARGET.dbp has been generated successfully"
 cd ..
+fi
+}
+
+batch(){
+    for TARGET in * ;
+        do
+            build "$TARGET"
+        done
+}
+
+TARGET=$(echo "$1" | cut -f 1 -d '/') # Re
+
+if [ ! -d "$TARGET" ] && [ "$1" != "batch" ]; then
+    echo "Invalid directory"
+elif [ "$1" == "batch" ]; then
+    echo "Batch compile in progress"
+    batch 
+else
+    build "$@"
+fi

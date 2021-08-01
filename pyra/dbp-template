@@ -6,13 +6,12 @@
 TARGET=$1
 
 [  -d "$PWD/$TARGET" ] && echo "$TARGET already exists" && exit 0
-mkdir  "$TARGET" "$TARGET/data" "$TARGET/icons" "$TARGET/metadata" "$TARGET/teasers"
+mkdir  "$TARGET" "$TARGET/data" "$TARGET/icons" "$TARGET/meta" "$TARGET/teasers"
 
-VERSION="0.1" ## Overrideable
 
-cat >"$TARGET/metadata/default.desktop"<<EOF
+cat >"$TARGET/meta/default.desktop"<<EOF
 [Desktop Entry]
-Version=0.1
+Version=1.0
 Type=Application
 Categories=Application;Game;
 Name=$TARGET
@@ -25,7 +24,7 @@ Id=$TARGET
 Name=$TARGET
 Arch=armhf
 Exec=$TARGET.launch
-Version=$VERSION
+Version=1.0
 Appdata=$TARGET
 Icon=icon.png
 Dependency[deb]=
