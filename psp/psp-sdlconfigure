@@ -1,0 +1,6 @@
+#!/bin/bash
+
+## Getting sick of typing all the sdl flags so making a script to do it for me
+
+LDFLAGS="-L$(psp-config --pspsdk-path)/lib -lc -lpspuser" \
+     ./configure --host psp --with-sdl-prefix=$(psp-config --psp-prefix)
