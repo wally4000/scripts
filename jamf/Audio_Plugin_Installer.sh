@@ -5,7 +5,6 @@
 
 #Todo:
 # Add support for Zip files, manufacturers are a pain
-# Potentially need to add xattr to remove quarantine from files if needed
 
 #Default Plugin Paths
 AAX="/Library/Application Support/Avid/Audio/Plug-ins"
@@ -18,7 +17,7 @@ COMPONENTS="/Library/Audio/Plug-Ins/Components"
 hdiutil info | grep '/Volumes' | cut -f 3 | xargs -I {} hdiutil eject "{}" 2> /dev/null
 
 #Mount specified DMG file ($4)
-# hdiutil mount "/Library/Application Support/JAMF/Waiting Room/$4"
+hdiutil mount "/Library/Application Support/JAMF/Waiting Room/$4"
 
 #Change working directoy to mounted DMG ($5)
 cd "/Volumes/$5"
@@ -33,7 +32,7 @@ done
 
 # Handle loose PKG files first
 for pkg in "/Volumes/$5"/*.pkg; do
-installer -pkg $pkg -target /
+installer -pkg "$pkg" -target /
 done
 
 #Iterate over DMG files
@@ -66,7 +65,10 @@ for dmg_file in "/Volumes/$5"/*.dmg; do
         xattr -rd com.apple.quarantine "$VST3/$file"
     done
     find "$dmg_just_mounted" -type f -name '*pkg' -print0 | while IFS= read -r -d '' dir; do
-    installer -pkg $dir -target /
+    installer -pkg "$dir" -target /
     done
     hdiutil eject "$dmg_just_mounted"
 done
+
+## Sanity Check, Eject all mounted DMG files again
+hdiutil info | grep '/Volumes' | cut -f 3 | xargs -I {} hdiutil eject "{}" 2> /dev/null
