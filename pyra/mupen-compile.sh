@@ -8,7 +8,7 @@
 #Requires libboost-filesystem-dev
 BUILD=Mupen64Plus-$(arch)
 PATHS="PREFIX=. SHAREDIR=. LIBDIR=. INCDIR=." #This doesn't really work.
-BUILDOPTS="USE_GLES=1 NEON=1 VFP_HARD=1 -j2"
+BUILDOPTS="USE_GLES=1 NEON=1 VFP_HARD=1 VULKAN=0 -j2"
 EXTRAOPTS="NEW_DYNAREC=1"
 DEBUGOPTS="DEBUG=1 V=1"
 REPOS=" core ui-console input-sdl rsp-hle audio-sdl video-rice" 
